@@ -1,5 +1,5 @@
 '''
-输入的是图像像素特征，网络采用三层的全连接
+The input is ram pixel value
 '''
 import numpy as np
 import tensorflow as tf
