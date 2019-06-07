@@ -65,7 +65,20 @@ class DQNAgent:
         self.sess.run(tf.global_variables_initializer())
 
         if self.load_model:
-            self.model.load_weights("./save_model/dqn.h5")
+            self.model.load_weights("./save_model/model_dqn.h5")
+
+    # state is input and Q Value of each action is output of network
+    def build_model(self):
+        model = Sequential()
+        model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu',
+                         input_shape=self.state_size))
+        model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu'))
+        model.add(Conv2D(64, (3, 3), strides=(1, 1), activation='relu'))
+        model.add(Flatten())
+        model.add(Dense(512, activation='relu'))
+        model.add(Dense(self.action_size))
+        model.summary()
+        return model
 
     # if the error is in [-1, 1], then the cost is quadratic to the error
     # But outside the interval, the cost is linear to the error
@@ -86,27 +99,14 @@ class DQNAgent:
         optimizer = RMSprop(lr=0.00025, epsilon=0.01)
         updates = optimizer.get_updates(self.model.trainable_weights, [], loss)
         train = K.function([self.model.input, a, y], [loss], updates=updates)
-
         return train
-
-    # state is input and Q Value of each action is output of network
-    def build_model(self):
-        model = Sequential()
-        model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu',
-                         input_shape=self.state_size))
-        model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu'))
-        model.add(Conv2D(64, (3, 3), strides=(1, 1), activation='relu'))
-        model.add(Flatten())
-        model.add(Dense(512, activation='relu'))
-        model.add(Dense(self.action_size))
-        model.summary()
-        return model
 
     # after some time interval update the target model to be same with model
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
 
-    # get action from model using epsilon-greedy policy
+    # train:get action from model using epsilon-greedy policy
+    # test:get action from model using greedy policy
     def get_action(self, history):
         history = np.float32(history / 255.0)
         if self.train:
@@ -149,8 +149,7 @@ class DQNAgent:
 
         target_value = self.target_model.predict(next_history)
 
-        # like Q Learning, get maximum Q value at s'
-        # But from target model
+        # like Q Learning, get maximum Q value at s',from target model
         for i in range(self.batch_size):
             if done:
                 target[i] = reward[i]
@@ -198,8 +197,6 @@ def pre_processing(observe):
 
 
 if __name__ == "__main__":
-    # In case of BreakoutDeterministic-v3, always skip 4 frames
-    # Deterministic-v4 version use 4 actions
     train = False #Training mode or test mode
     env = gym.make('FishingDerby-v0')
     agent = DQNAgent(action_size=env.action_space.n,train=train)
@@ -274,7 +271,7 @@ if __name__ == "__main__":
                     agent.avg_q_max, agent.avg_loss = 0, 0
 
             if e % 100== 0 :
-                agent.model.save_weights('./save_model/dqn_'+str(e)+'_.h5')
+                agent.model.save_weights('./save_model/model_dqn.h5')
     else:
         agent.restore_model('./save_model/model_dqn.h5')
         score_total = 0
