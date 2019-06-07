@@ -301,5 +301,3 @@ if __name__ == "__main__":
                 if done:
                     score_total += score+99
                     print("episode:", e, "  score:", score+99)
-        print('之前模型最高得分是15.58,第400回合的模型')
-        print('过去100回合的平均得分',score_total/100)
