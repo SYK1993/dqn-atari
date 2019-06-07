@@ -19,7 +19,7 @@ class DeepQNetwork:
             replace_target_iter=1000,
             batch_size=32,
             output_graph=False,
-            load_model=False, # 加载模型是为了加载之前训练好的模型继续训练，test不训练只测试
+            load_model=False, 
             train = True
 
     ):
@@ -198,7 +198,7 @@ class DeepQNetwork:
                 self.s_: batch_memory[:, -self.n_features:],  # fixed params
                 self.s: batch_memory[:, :self.n_features],  # newest params
             })
-
+        # q_eval_ = self.sess.run(self.q_eval,feed_dict={self.s: batch_memory[:, -self.n_features:]}) #ddqn
         # change q_target w.r.t q_eval's action
         q_target = q_eval.copy()
 
@@ -207,7 +207,7 @@ class DeepQNetwork:
         reward = batch_memory[:, self.n_features + 1]
 
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)#compute q_target
-
+        # q_target[batch_index, eval_act_index] = reward + self.gamma * q_next[np.argmax(q_eval_,axis=1)] # ddqn
         # train eval network
         _, self.cost = self.sess.run([self._train_op, self.loss],
                                      feed_dict={self.s: batch_memory[:, :self.n_features],
